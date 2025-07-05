@@ -2,37 +2,42 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>LINE Login 自動填表</title>
+  <title>LINE Login 填寫 Google 表單</title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
 <body>
-  <h2>使用 LINE 登入來填寫表單</h2>
-  <button onclick="loginWithLine()">使用 LINE 登入</button>
+  <h2>正在處理 LINE 登入…</h2>
 
   <script>
-    // TODO：將下面這行換成你自己的 LIFF ID！
+    // ✅ 替換為你的 LIFF ID（LINE Developers 中建立的）
     const LIFF_ID = "2007697770-4dnj835P";
 
-    const GOOGLE_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLScKRCYznqIpPtlPJmR-50Rf7NmUcdoUNiU2YcH__myZ-l-EtA/viewform";
-    const ENTRY_NAME = "entry.609767643";         // 顯示名稱
-    const ENTRY_EMAIL = "entry.1719976921";       // 電子郵件
+    // ✅ 替換為你的 Google 表單（預設填寫欄位）
+    const GOOGLE_FORM_BASE = "https://docs.google.com/forms/d/e/1FAIpQLScKRCYznqIpPtlPJmR-50Rf7NmUcdoUNiU2YcH__myZ-l-EtA/viewform";
 
-    async function loginWithLine() {
+    // ✅ 對應的 entry ID，從 Google 表單「預填連結」取得
+    const ENTRY_NAME = "entry.609767643";       // 顯示名稱
+    const ENTRY_EMAIL = "entry.1719976921";     // 電子郵件
+
+    async function main() {
       await liff.init({ liffId: LIFF_ID });
 
       if (!liff.isLoggedIn()) {
-        liff.login(); // 登入後會自動 reload
+        liff.login();
         return;
       }
 
       const profile = await liff.getProfile();
       const idToken = liff.getDecodedIDToken();
-      const displayName = encodeURIComponent(profile.displayName);
-      const userEmail = encodeURIComponent(idToken.email); // 需申請 email 權限
 
-      const formURL = `${GOOGLE_FORM_URL}?${ENTRY_NAME}=${displayName}&${ENTRY_EMAIL}=${userEmail}`;
+      const name = encodeURIComponent(profile.displayName);
+      const email = encodeURIComponent(idToken.email || "");
+
+      const formURL = `${GOOGLE_FORM_BASE}?${ENTRY_NAME}=${name}&${ENTRY_EMAIL}=${email}`;
       window.location.href = formURL;
     }
+
+    main();
   </script>
 </body>
 </html>
