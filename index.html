@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>LINE Login 自動填表</title>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</head>
+<body>
+  <h2>使用 LINE 登入來填寫表單</h2>
+  <button onclick="loginWithLine()">使用 LINE 登入</button>
+
+  <script>
+    // TODO：將下面這行換成你自己的 LIFF ID！
+    const LIFF_ID = "2007697770-4dnj835P";
+
+    const GOOGLE_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLScKRCYznqIpPtlPJmR-50Rf7NmUcdoUNiU2YcH__myZ-l-EtA/viewform";
+    const ENTRY_NAME = "entry.609767643";         // 顯示名稱
+    const ENTRY_EMAIL = "entry.1719976921";       // 電子郵件
+
+    async function loginWithLine() {
+      await liff.init({ liffId: LIFF_ID });
+
+      if (!liff.isLoggedIn()) {
+        liff.login(); // 登入後會自動 reload
+        return;
+      }
+
+      const profile = await liff.getProfile();
+      const idToken = liff.getDecodedIDToken();
+      const displayName = encodeURIComponent(profile.displayName);
+      const userEmail = encodeURIComponent(idToken.email); // 需申請 email 權限
+
+      const formURL = `${GOOGLE_FORM_URL}?${ENTRY_NAME}=${displayName}&${ENTRY_EMAIL}=${userEmail}`;
+      window.location.href = formURL;
+    }
+  </script>
+</body>
+</html>
