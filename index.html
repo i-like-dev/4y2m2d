@@ -1,40 +1,112 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-TW">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>LINE Login 填寫 Google 表單</title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <style>
+    body {
+      font-family: "Microsoft JhengHei", sans-serif;
+      background: #f0f4f8;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .container {
+      background: white;
+      padding: 24px 36px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgb(0 0 0 / 0.1);
+      text-align: center;
+      width: 320px;
+    }
+    h1 {
+      margin-bottom: 12px;
+      color: #00c300;
+    }
+    p.status {
+      margin-top: 16px;
+      color: #666;
+    }
+    p.error {
+      margin-top: 16px;
+      color: #e63946;
+      font-weight: bold;
+    }
+    button {
+      margin-top: 20px;
+      background-color: #00c300;
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #009900;
+    }
+  </style>
 </head>
 <body>
-  <h2>正在處理 LINE 登入…</h2>
+  <div class="container">
+    <h1>LINE 登入自動填表</h1>
+    <p class="status" id="status">準備中…</p>
+    <button id="login-btn" style="display:none;">使用 LINE 登入</button>
+  </div>
 
   <script>
-    // ✅ 替換為你的 LIFF ID（LINE Developers 中建立的）
+    // 替換成你的 LIFF ID
     const LIFF_ID = "2007697770-4dnj835P";
 
-    // ✅ 替換為你的 Google 表單（預設填寫欄位）
+    // Google 表單網址（未填寫版）
     const GOOGLE_FORM_BASE = "https://docs.google.com/forms/d/e/1FAIpQLScKRCYznqIpPtlPJmR-50Rf7NmUcdoUNiU2YcH__myZ-l-EtA/viewform";
 
-    // ✅ 對應的 entry ID，從 Google 表單「預填連結」取得
-    const ENTRY_NAME = "entry.609767643";       // 顯示名稱
-    const ENTRY_EMAIL = "entry.1719976921";     // 電子郵件
+    // Google 表單欄位對應的 entry ID
+    const ENTRY_NAME = "entry.609767643";
+    const ENTRY_EMAIL = "entry.1719976921";
+
+    const statusElem = document.getElementById("status");
+    const loginBtn = document.getElementById("login-btn");
 
     async function main() {
-      await liff.init({ liffId: LIFF_ID });
+      try {
+        statusElem.textContent = "初始化 LIFF…";
+        await liff.init({ liffId: LIFF_ID });
 
-      if (!liff.isLoggedIn()) {
-        liff.login();
-        return;
+        if (!liff.isLoggedIn()) {
+          statusElem.textContent = "尚未登入，請點擊按鈕登入";
+          loginBtn.style.display = "inline-block";
+          loginBtn.onclick = () => {
+            liff.login();
+          };
+          return;
+        }
+
+        statusElem.textContent = "登入成功，取得資料中…";
+
+        const profile = await liff.getProfile();
+        const idToken = liff.getDecodedIDToken();
+
+        const name = encodeURIComponent(profile.displayName);
+        const email = encodeURIComponent(idToken.email || "");
+
+        statusElem.textContent = "即將導向表單…";
+
+        const formURL = `${GOOGLE_FORM_BASE}?${ENTRY_NAME}=${name}&${ENTRY_EMAIL}=${email}`;
+        // 延遲 1 秒跳轉，給使用者感覺
+        setTimeout(() => {
+          window.location.href = formURL;
+        }, 1000);
+
+      } catch (err) {
+        statusElem.textContent = "";
+        loginBtn.style.display = "none";
+        document.body.innerHTML = `<p class="error">錯誤：${err.message}</p>`;
+        console.error(err);
       }
-
-      const profile = await liff.getProfile();
-      const idToken = liff.getDecodedIDToken();
-
-      const name = encodeURIComponent(profile.displayName);
-      const email = encodeURIComponent(idToken.email || "");
-
-      const formURL = `${GOOGLE_FORM_BASE}?${ENTRY_NAME}=${name}&${ENTRY_EMAIL}=${email}`;
-      window.location.href = formURL;
     }
 
     main();
